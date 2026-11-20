@@ -1,0 +1,29 @@
+{
+  "api_base_url": "https://api.lehmus-ai.oulu.fi",
+  "api_keys": [
+    {
+      "label": "Gemma4 31B",
+      "key": "cm_api_REPLACE_WITH_GEMMA4_31B_KEY",
+      "models": [
+        "wnofibsjlomanbprgbdp"
+      ]
+    },
+    {
+      "label": "GPT-OSS 120B",
+      "key": "cm_api_REPLACE_WITH_GPT_OSS_120B_KEY",
+      "models": [
+        "azsydsttjnlbfjbgqnwd"
+      ]
+    },
+    {
+      "label": "Qwen3-27B",
+      "key": "cm_api_REPLACE_WITH_QWEN3_27B_KEY",
+      "models": [
+        "Qwen3.8-27B"
+      ]
+    }
+  ],
+  "default_model": "jwwqblcgkizlhxjjbkcp",
+  "system_prompt": "",
+  "port": 8765
+}

@@ -1,0 +1,7 @@
+# Local data (chat history, uploads)
+data/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
