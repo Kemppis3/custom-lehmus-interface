@@ -78,11 +78,11 @@ async def discover_models() -> None:
                 r.raise_for_status()
                 listed = r.json().get("data", [])
             except httpx.HTTPStatusError as e:  # keep going with other keys
-                hint = {401: "key invalid or revoked", 403: "key lacks permission"}.get(e.response.status_code, "")
-                errors.append(f"API key '{label}': could not list models (HTTP {e.response.status_code} {hint})".strip())
+                hint = {401: "avain on virheellinen tai peruttu", 403: "avaimelta puuttuu oikeus"}.get(e.response.status_code, "")
+                errors.append(f"API-avain '{label}': mallien haku epäonnistui (HTTP {e.response.status_code} {hint})".strip())
                 listed = [{"id": m} for m in allowed]
             except Exception as e:
-                errors.append(f"API key '{label}': could not reach the gateway ({type(e).__name__})")
+                errors.append(f"API-avain '{label}': palvelimeen ei saatu yhteyttä ({type(e).__name__})")
                 listed = [{"id": m} for m in allowed]  # fall back to the configured ids
             for m in listed:
                 mid = m.get("id")
@@ -211,8 +211,8 @@ def create_conversation(body: NewConversation):
     now = time.time()
     cid = uuid.uuid4().hex
     with _db_lock, db() as c:
-        c.execute("INSERT INTO conversations VALUES (?,?,?,?,?)", (cid, "New chat", body.model, now, now))
-    return {"id": cid, "title": "New chat", "model": body.model, "created_at": now, "updated_at": now}
+        c.execute("INSERT INTO conversations VALUES (?,?,?,?,?)", (cid, "Uusi keskustelu", body.model, now, now))
+    return {"id": cid, "title": "Uusi keskustelu", "model": body.model, "created_at": now, "updated_at": now}
 
 
 @app.get("/api/conversations/{cid}")
@@ -220,7 +220,7 @@ def get_conversation(cid: str):
     with db() as c:
         conv = c.execute("SELECT * FROM conversations WHERE id=?", (cid,)).fetchone()
         if not conv:
-            raise HTTPException(404, "Conversation not found")
+            raise HTTPException(404, "Keskustelua ei löytynyt")
         msgs = c.execute(
             "SELECT * FROM messages WHERE conversation_id=? ORDER BY id", (cid,)
         ).fetchall()
@@ -240,7 +240,7 @@ def get_conversation(cid: str):
 def patch_conversation(cid: str, body: ConversationPatch):
     with _db_lock, db() as c:
         if body.title is not None:
-            c.execute("UPDATE conversations SET title=? WHERE id=?", (body.title.strip()[:200] or "Untitled", cid))
+            c.execute("UPDATE conversations SET title=? WHERE id=?", (body.title.strip()[:200] or "Nimetön", cid))
         if body.model is not None:
             c.execute("UPDATE conversations SET model=? WHERE id=?", (body.model, cid))
     return {"ok": True}
@@ -284,7 +284,7 @@ def extract_text(path: Path, filename: str, mime: str) -> str | None:
 async def upload(file: UploadFile = File(...)):
     data = await file.read()
     if len(data) > MAX_UPLOAD_BYTES:
-        raise HTTPException(413, f"File too large (max {MAX_UPLOAD_BYTES // (1024 * 1024)} MB)")
+        raise HTTPException(413, f"Tiedosto on liian suuri (enintään {MAX_UPLOAD_BYTES // (1024 * 1024)} Mt)")
     filename = Path(file.filename or "file").name
     mime = file.content_type or mimetypes.guess_type(filename)[0] or "application/octet-stream"
     fid = uuid.uuid4().hex
@@ -298,11 +298,11 @@ async def upload(file: UploadFile = File(...)):
             text = extract_text(path, filename, mime)
         except Exception as e:
             path.unlink(missing_ok=True)
-            raise HTTPException(400, f"Could not read {filename}: {e}")
+            raise HTTPException(400, f"Tiedoston {filename} lukeminen epäonnistui: {e}")
         if text is None:
             path.unlink(missing_ok=True)
             raise HTTPException(
-                415, f"Unsupported file type: {filename}. Supported: images, PDF, DOCX and text/code files."
+                415, f"Tiedostotyyppiä ei tueta: {filename}. Tuetut: kuvat, PDF, DOCX sekä teksti- ja kooditiedostot."
             )
         kind = "text"
 
@@ -353,7 +353,7 @@ def build_upstream_messages(c: sqlite3.Connection, cid: str, vision: bool) -> li
                 b64 = base64.b64encode(Path(f["path"]).read_bytes()).decode()
                 images.append({"type": "image_url", "image_url": {"url": f"data:{f['mime']};base64,{b64}"}})
             else:
-                text += f"\n\n[Image '{f['filename']}' attached, but the selected model cannot view images.]"
+                text += f"\n\n[Liitteenä kuva '{f['filename']}', mutta valittu malli ei pysty käsittelemään kuvia.]"
         if images:
             msgs.append({"role": m["role"], "content": [{"type": "text", "text": text}, *images]})
         else:
@@ -369,12 +369,12 @@ def sse(event: str, data: Any) -> str:
 async def send_message(cid: str, body: SendMessage):
     model = MODELS.get(body.model)
     if not model:
-        raise HTTPException(400, f"Unknown model: {body.model}")
+        raise HTTPException(400, f"Tuntematon malli: {body.model}")
     now = time.time()
     with _db_lock, db() as c:
         conv = c.execute("SELECT * FROM conversations WHERE id=?", (cid,)).fetchone()
         if not conv:
-            raise HTTPException(404, "Conversation not found")
+            raise HTTPException(404, "Keskustelua ei löytynyt")
         if body.regenerate:
             last = c.execute("SELECT id, role FROM messages WHERE conversation_id=? ORDER BY id DESC LIMIT 1",
                              (cid,)).fetchone()
@@ -386,9 +386,9 @@ async def send_message(cid: str, body: SendMessage):
                 "VALUES (?,?,?,?,?,?)",
                 (cid, "user", body.content, json.dumps(body.attachments), body.model, now),
             )
-            if conv["title"] == "New chat":
+            if conv["title"] == "Uusi keskustelu":
                 title = " ".join(body.content.split())[:60] or (
-                    "File chat" if body.attachments else "New chat")
+                    "Tiedostokeskustelu" if body.attachments else "Uusi keskustelu")
                 c.execute("UPDATE conversations SET title=? WHERE id=?", (title, cid))
         c.execute("UPDATE conversations SET model=?, updated_at=? WHERE id=?", (body.model, now, cid))
         upstream_msgs = build_upstream_messages(c, cid, "image" in model["input_modalities"])
@@ -406,9 +406,9 @@ async def send_message(cid: str, body: SendMessage):
                 async with client.stream("POST", url, json=payload, headers=headers) as r:
                     if r.status_code != 200:
                         detail = (await r.aread()).decode("utf-8", "ignore")[:500]
-                        hint = {403: " (this key has no Invoke grant for the model)",
-                                404: " (model not found or not ready)"}.get(r.status_code, "")
-                        error = f"Gateway error {r.status_code}{hint}: {detail}"
+                        hint = {403: " (avaimella ei ole Invoke-oikeutta tähän malliin)",
+                                404: " (mallia ei löydy tai se ei ole valmiina)"}.get(r.status_code, "")
+                        error = f"Rajapintavirhe {r.status_code}{hint}: {detail}"
                     else:
                         async for line in r.aiter_lines():
                             if not line.startswith("data:"):
@@ -430,7 +430,7 @@ async def send_message(cid: str, body: SendMessage):
                                     answer.append(delta["content"])
                                     yield sse("delta", delta["content"])
         except httpx.HTTPError as e:
-            error = f"Connection problem: {e}"
+            error = f"Yhteysongelma: {e}"
         finally:
             # Save whatever we got, even if the user pressed Stop mid-answer.
             text = "".join(answer)

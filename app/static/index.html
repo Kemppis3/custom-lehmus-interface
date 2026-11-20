@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="fi">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -10,22 +10,22 @@
 <body>
   <aside id="sidebar">
     <div class="side-head">
-      <button id="new-chat" class="primary">+ New chat</button>
-      <button id="close-sidebar" class="icon-btn mobile-only" aria-label="Close sidebar">✕</button>
+      <button id="new-chat" class="primary">+ Uusi keskustelu</button>
+      <button id="close-sidebar" class="icon-btn mobile-only" aria-label="Sulje sivupalkki">✕</button>
     </div>
-    <input id="search" type="search" placeholder="Search chats…" autocomplete="off">
-    <nav id="conv-list" aria-label="Conversations"></nav>
+    <input id="search" type="search" placeholder="Hae keskusteluista…" autocomplete="off">
+    <nav id="conv-list" aria-label="Keskustelut"></nav>
   </aside>
 
   <main id="main">
     <header id="topbar">
-      <button id="open-sidebar" class="icon-btn mobile-only" aria-label="Open sidebar">☰</button>
+      <button id="open-sidebar" class="icon-btn mobile-only" aria-label="Avaa sivupalkki">☰</button>
       <label class="model-pick">
-        <span>Model</span>
+        <span>Malli</span>
         <select id="model-select"></select>
       </label>
-      <span id="model-badge" class="badge" hidden>🖼 vision</span>
-      <button id="refresh-models" class="icon-btn" title="Refresh model list" aria-label="Refresh model list">⟳</button>
+      <span id="model-badge" class="badge" hidden>🖼 kuvat</span>
+      <button id="refresh-models" class="icon-btn" title="Päivitä malliluettelo" aria-label="Päivitä malliluettelo">⟳</button>
     </header>
 
     <div id="notice" hidden></div>
@@ -33,24 +33,24 @@
     <section id="messages" aria-live="polite">
       <div id="empty" class="empty">
         <h1>Lehmus Chat</h1>
-        <p>Pick a model above and start typing. You can attach images, PDFs, Word documents and text or code files.</p>
+        <p>Valitse malli yläpalkista ja kirjoita viesti. Voit liittää kuvia, PDF- ja Word-tiedostoja sekä teksti- ja kooditiedostoja.</p>
       </div>
     </section>
 
     <form id="composer">
       <div id="attach-list"></div>
       <div class="composer-row">
-        <label class="icon-btn attach" title="Attach files" aria-label="Attach files">
+        <label class="icon-btn attach" title="Liitä tiedostoja" aria-label="Liitä tiedostoja">
           📎<input id="file-input" type="file" multiple hidden>
         </label>
-        <textarea id="input" rows="1" placeholder="Message the model…  (Enter to send, Shift+Enter for new line)"></textarea>
-        <button id="send" type="submit" class="primary">Send</button>
-        <button id="stop" type="button" class="danger" hidden>Stop</button>
+        <textarea id="input" rows="1" placeholder="Kirjoita viesti…  (Enter lähettää, Shift+Enter rivinvaihto)"></textarea>
+        <button id="send" type="submit" class="primary">Lähetä</button>
+        <button id="stop" type="button" class="danger" hidden>Pysäytä</button>
       </div>
     </form>
   </main>
 
-  <div id="drop-overlay" hidden>Drop files to attach</div>
+  <div id="drop-overlay" hidden>Pudota tiedostot liitteeksi</div>
 
   <script src="/static/vendor/marked.min.js"></script>
   <script src="/static/vendor/purify.min.js"></script>

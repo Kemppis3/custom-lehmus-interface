@@ -14,7 +14,7 @@ CONFIG = ROOT / "config.json"
 
 def fail(msg: str) -> None:
     print("\n" + msg + "\n")
-    input("Press Enter to close…")
+    input("Paina Enter sulkeaksesi…")
     sys.exit(1)
 
 
@@ -28,11 +28,11 @@ def is_running(url: str) -> bool:
 
 def main() -> None:
     if not CONFIG.exists():
-        fail(f"config.json is missing.\nPlace config.json (with the API URL and keys) in this folder: {ROOT}")
+        fail(f"config.json puuttuu.\nLisää config.json (API-osoite ja avaimet) tähän kansioon: {ROOT}")
     try:
         port = int(json.loads(CONFIG.read_text(encoding="utf-8")).get("port", 8765))
     except Exception as e:
-        fail(f"config.json is not valid JSON: {e}")
+        fail(f"config.json ei ole kelvollista JSONia: {e}")
     url = f"http://127.0.0.1:{port}"
 
     if is_running(url):
@@ -47,7 +47,7 @@ def main() -> None:
             time.sleep(0.2)
 
     threading.Thread(target=open_when_ready, daemon=True).start()
-    print(f"Lehmus Chat is running at {url}\nClose this window to stop it.")
+    print(f"Lehmus Chat on käynnissä osoitteessa {url}\nSulje tämä ikkuna pysäyttääksesi sen.")
     import uvicorn
 
     sys.path.insert(0, str(ROOT))

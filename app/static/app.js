@@ -39,11 +39,11 @@ function addCopyButtons(root) {
     const b = document.createElement("button");
     b.className = "copy-code";
     b.type = "button";
-    b.textContent = "Copy";
+    b.textContent = "Kopioi";
     b.onclick = () => {
       navigator.clipboard.writeText(pre.querySelector("code")?.innerText ?? pre.innerText);
-      b.textContent = "Copied";
-      setTimeout(() => (b.textContent = "Copy"), 1200);
+      b.textContent = "Kopioitu";
+      setTimeout(() => (b.textContent = "Kopioi"), 1200);
     };
     pre.appendChild(b);
   });
@@ -85,10 +85,10 @@ async function loadModels(refresh = false) {
     if (prev && data.models.some((m) => m.id === prev)) sel.value = prev;
     updateModelBadge();
     const problems = [...data.errors];
-    if (!data.models.length) problems.unshift("No models available. Check the API keys in config.json.");
+    if (!data.models.length) problems.unshift("Malleja ei ole saatavilla. Tarkista API-avaimet config.json-tiedostosta.");
     showNotice(problems.join("\n"));
   } catch (e) {
-    showNotice("Could not load models: " + e.message);
+    showNotice("Mallien lataus epäonnistui: " + e.message);
   }
 }
 
@@ -107,11 +107,11 @@ async function loadConversations() {
 function dayGroup(ts) {
   const d = new Date(ts * 1000), now = new Date();
   const days = Math.floor((new Date(now.toDateString()) - new Date(d.toDateString())) / 86400000);
-  if (days === 0) return "Today";
-  if (days === 1) return "Yesterday";
-  if (days < 7) return "Previous 7 days";
-  if (days < 30) return "Previous 30 days";
-  return d.toLocaleDateString(undefined, { year: "numeric", month: "long" });
+  if (days === 0) return "Tänään";
+  if (days === 1) return "Eilen";
+  if (days < 7) return "Edelliset 7 päivää";
+  if (days < 30) return "Edelliset 30 päivää";
+  return d.toLocaleDateString("fi-FI", { year: "numeric", month: "long" });
 }
 
 function renderConversationList() {
@@ -130,17 +130,17 @@ function renderConversationList() {
     const row = document.createElement("div");
     row.className = "conv" + (state.current?.id === c.id ? " active" : "");
     row.innerHTML = `<span class="title"></span><span class="actions">
-      <button type="button" data-act="rename" title="Rename">✎</button>
-      <button type="button" data-act="delete" title="Delete">🗑</button></span>`;
+      <button type="button" data-act="rename" title="Nimeä uudelleen">✎</button>
+      <button type="button" data-act="delete" title="Poista">🗑</button></span>`;
     row.querySelector(".title").textContent = c.title;
     row.querySelector(".title").title = c.title;
     row.onclick = async (ev) => {
       const act = ev.target.dataset?.act;
       if (act === "rename") {
-        const t = prompt("Rename chat", c.title);
+        const t = prompt("Nimeä keskustelu uudelleen", c.title);
         if (t) { await api(`/api/conversations/${c.id}`, { method: "PATCH", body: JSON.stringify({ title: t }) }); loadConversations(); }
       } else if (act === "delete") {
-        if (confirm(`Delete "${c.title}"? This cannot be undone.`)) {
+        if (confirm(`Poistetaanko "${c.title}"? Tätä ei voi perua.`)) {
           await api(`/api/conversations/${c.id}`, { method: "DELETE" });
           if (state.current?.id === c.id) newChat();
           loadConversations();
@@ -152,7 +152,7 @@ function renderConversationList() {
     list.appendChild(row);
   }
   if (!state.conversations.length) {
-    list.innerHTML = `<div class="group-label">${$("#search").value ? "No matches" : "No chats yet"}</div>`;
+    list.innerHTML = `<div class="group-label">${$("#search").value ? "Ei hakutuloksia" : "Ei vielä keskusteluja"}</div>`;
   }
 }
 
@@ -219,12 +219,12 @@ function messageEl(m) {
   meta.className = "meta";
   if (m.role === "assistant") {
     const modelName = state.models.find((x) => x.id === m.model)?.display_name || m.model || "";
-    meta.innerHTML = `<span></span><button type="button" data-act="copy">Copy</button>`;
+    meta.innerHTML = `<span></span><button type="button" data-act="copy">Kopioi</button>`;
     meta.querySelector("span").textContent = modelName;
     meta.querySelector('[data-act="copy"]').onclick = (e) => {
       navigator.clipboard.writeText(m.content);
-      e.target.textContent = "Copied";
-      setTimeout(() => (e.target.textContent = "Copy"), 1200);
+      e.target.textContent = "Kopioitu";
+      setTimeout(() => (e.target.textContent = "Kopioi"), 1200);
     };
   }
   el.appendChild(meta);
@@ -237,7 +237,7 @@ function renderMessages() {
   const msgs = state.current?.messages || [];
   if (!msgs.length) {
     box.innerHTML = `<div class="empty"><h1>Lehmus Chat</h1>
-      <p>Pick a model above and start typing. You can attach images, PDFs, Word documents and text or code files.</p></div>`;
+      <p>Valitse malli yläpalkista ja kirjoita viesti. Voit liittää kuvia, PDF- ja Word-tiedostoja sekä teksti- ja kooditiedostoja.</p></div>`;
     return;
   }
   msgs.forEach((m) => box.appendChild(messageEl(m)));
@@ -245,7 +245,7 @@ function renderMessages() {
   if (msgs.at(-1).role === "assistant" && last) {
     const b = document.createElement("button");
     b.type = "button";
-    b.textContent = "Regenerate";
+    b.textContent = "Luo uudelleen";
     b.onclick = () => send({ regenerate: true });
     last.querySelector(".meta").appendChild(b);
   }
@@ -268,9 +268,9 @@ async function send({ regenerate = false } = {}) {
   const input = $("#input");
   const text = input.value.trim();
   const model = selectedModel();
-  if (!model) { showNotice("Select a model first."); return; }
+  if (!model) { showNotice("Valitse ensin malli."); return; }
   if (!regenerate && !text && !state.pending.length) return;
-  if (state.pending.some((p) => p.uploading)) { showNotice("Wait for the uploads to finish."); return; }
+  if (state.pending.some((p) => p.uploading)) { showNotice("Odota, että tiedostojen lataus valmistuu."); return; }
   showNotice("");
 
   if (!state.current) {
@@ -348,7 +348,7 @@ async function send({ regenerate = false } = {}) {
           if (!reasoningEl) {
             reasoningEl = document.createElement("details");
             reasoningEl.className = "reasoning";
-            reasoningEl.innerHTML = "<summary>Thinking…</summary><div></div>";
+            reasoningEl.innerHTML = "<summary>Ajattelee…</summary><div></div>";
             el.insertBefore(reasoningEl, bubble);
           }
           reasoningEl.querySelector("div").textContent = reasoning;
@@ -368,7 +368,7 @@ async function send({ regenerate = false } = {}) {
   if (answer) conv.messages.push({ role: "assistant", content: answer, model: model.id });
   renderMessages();
   if (reasoningEl) {
-    reasoningEl.querySelector("summary").textContent = "Show thinking";
+    reasoningEl.querySelector("summary").textContent = "Näytä päättely";
     const lastMsg = $("#messages").lastElementChild;
     lastMsg?.insertBefore(reasoningEl, lastMsg.querySelector(".bubble"));
   }
@@ -379,7 +379,7 @@ async function send({ regenerate = false } = {}) {
     err.querySelector(".meta").innerHTML = "";
     const retry = document.createElement("button");
     retry.type = "button";
-    retry.textContent = "Retry";
+    retry.textContent = "Yritä uudelleen";
     retry.onclick = () => send({ regenerate: true });
     err.querySelector(".meta").appendChild(retry);
     $("#messages").appendChild(err);
@@ -396,14 +396,14 @@ function renderPending() {
   state.pending.forEach((p, idx) => {
     const c = document.createElement("span");
     c.className = "chip" + (p.uploading ? " uploading" : "");
-    c.innerHTML = `<span></span><button type="button" aria-label="Remove">✕</button>`;
-    c.querySelector("span").textContent = `${p.kind === "image" ? "🖼" : "📄"} ${p.filename}${p.uploading ? " (uploading…)" : ""}`;
+    c.innerHTML = `<span></span><button type="button" aria-label="Poista">✕</button>`;
+    c.querySelector("span").textContent = `${p.kind === "image" ? "🖼" : "📄"} ${p.filename}${p.uploading ? " (ladataan…)" : ""}`;
     c.querySelector("button").onclick = () => { state.pending.splice(idx, 1); renderPending(); };
     list.appendChild(c);
   });
   const imgs = state.pending.some((p) => p.kind === "image");
   if (imgs && selectedModel() && !selectedModel().vision) {
-    showNotice("The selected model cannot view images. Choose a model marked 🖼 to send images.");
+    showNotice("Valittu malli ei osaa käsitellä kuvia. Valitse 🖼-merkitty malli kuvien lähettämiseen.");
   }
 }
 
